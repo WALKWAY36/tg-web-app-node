@@ -4,6 +4,12 @@ const cors = require('cors');
 
 const token = '6458923302:AAEbP5NM1SSGyHSMLDP5Hzz8B_KPNuUG8E0';
 const webUrl = 'https://serene-strudel-d69a58.netlify.app';
+// const webUrl = 'https://4323-194-5-60-167.ngrok-free.app';
+const ownerChatID = -1002145451332;
+
+const _sendDataToOwner= async (data, from)=>{
+    await bot.sendMessage(ownerChatID, `Заявка принята, ${data} \n От  ${from}`);
+}
 
 const bot = new TelegramBot(token, {polling: true});
 const app = express();
@@ -34,11 +40,15 @@ bot.on('message', async (msg) => {
 
   if(msg?.web_app_data?.data) {
     try {
-        const data = JSON.parse(msg?.web_app_data?.data)
+        if (chatId!==ownerChatID){
+            await _sendDataToOwner(msg?.web_app_data?.data, JSON.stringify(msg.from))
+        }
+        await bot.sendMessage(chatId, 'Вы успешно зарегестрировались!')
 
-        await bot.sendMessage(chatId, 'Спасибо за обратную связь!')
-        await bot.sendMessage(chatId, 'Ваша страна:' + data?.country);
-        await bot.sendMessage(chatId, 'Ваша улица:' + data?.street);
+        const data = JSON.parse(msg?.web_app_data?.data)
+        await bot.sendMessage(chatId, data.user.id);
+        await bot.sendMessage(chatId, 'Ваша страна:' + data?.Name);
+        // await bot.sendMessage(chatId, 'Ваша улица:' + data?.street);
 
         setTimeput( async () => {
             await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
@@ -50,27 +60,27 @@ bot.on('message', async (msg) => {
   }
 });
 
-app.post('/web-', async (req, res) => {
-    const {queryId, products, totalPrice} = req.body;
-
-    try {
-        await bot.answerWebAppQuery(queryId, {
-            type: 'article',
-            id: queryId,
-            title: 'Успешная покупка',
-            input_message_content: {message_text: 'Поздравляю с покупкой. вы приобрели товар на сумму ' + totalPrice}
-        })
-        return res.status(200).json({});
-    } catch (e) {
-        await bot.answerWebAppQuery(queryId, {
-            type: 'article',
-            id: queryId,
-            title: 'Не удалось приобрести товар',
-            input_message_content: {message_text: 'Не удалось приобрести товар'}
-        })
-        return res.status(500).json({});
-    }
-})
+// app.post('/web-', async (req, res) => {
+//     const {queryId, products, totalPrice} = req.body;
+//
+//     try {
+//         await bot.answerWebAppQuery(queryId, {
+//             type: 'article',
+//             id: queryId,
+//             title: 'Успешная покупка',
+//             input_message_content: {message_text: 'Поздравляю с покупкой. вы приобрели товар на сумму ' + totalPrice}
+//         })
+//         return res.status(200).json({});
+//     } catch (e) {
+//         await bot.answerWebAppQuery(queryId, {
+//             type: 'article',
+//             id: queryId,
+//             title: 'Не удалось приобрести товар',
+//             input_message_content: {message_text: 'Не удалось приобрести товар'}
+//         })
+//         return res.status(500).json({});
+//     }
+// })
 
 const PORT = 8000;
 app.listen(PORT, () => console.log('server started on PORT ' + PORT))
